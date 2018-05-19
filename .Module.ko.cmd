@@ -1,0 +1,1 @@
+cmd_/home/pi/work/mkt_gpio_driver/Module.ko := ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/pi/work/mkt_gpio_driver/Module.ko /home/pi/work/mkt_gpio_driver/Module.o /home/pi/work/mkt_gpio_driver/Module.mod.o ;  true

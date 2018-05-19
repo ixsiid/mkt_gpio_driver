@@ -7,9 +7,11 @@
 #include <linux/sched.h>
 #include <linux/device.h>
 #include <linux/slab.h>
+#include <linux/uaccess.h>
 #include <asm/current.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
+
 
 /* ペリフェラルレジスタの物理アドレス(BCM2835の仕様書より) */
 #define REG_ADDR_BASE		(0x3F000000)	   /* bcm_host_get_peripheral_address()の方がbetter */
@@ -55,6 +57,8 @@ static int fluidsynth_close(struct inode *inode, struct file *file)
 }
 
 static int _latest_value = 0;
+static int _index = 0;
+char message[3] = {'0', '\n', '\0'};
 /* read時に呼ばれる関数 */
 static ssize_t device_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 {
@@ -62,15 +66,52 @@ static ssize_t device_read(struct file *filp, char __user *buf, size_t count, lo
 	int address = address = (int)ioremap_nocache(REG_ADDR_GPIO_BASE + REG_ADDR_GPIO_LEVEL_0, 4);
 	int val = (REG(address) & (1 << 4)) != 0; // GPIO4が0かどうかを0, 1にする
 
-	if (val == _latest_value) return 0;
+	if (_index == 1) {
+		if (count > 1) {
+			copy_to_user(buf, &message[1], 2);
+			_index = 0;
+			return 2;
+		} else if (count == 1) {
+			copy_to_user(buf, &message[1], 1);
+			_index = 2;
+			return 1;
+		} else {
+			return count;
+		}
+	}
+	if (_index == 2) {
+		if (count > 0) {
+			copy_to_user(buf, &message[2], 1);
+			_index = 0;
+			return 1;
+		} else {
+			return count;
+		}
+	}
+
+	if (val == _latest_value) {
+		// 1byteの場合
+		put_user(0, &buf[0]);
+		iounmap((void*)address);
+		return 1;
+	}
 
 	// GPIOの出力値をユーザへ文字として返す
 	_latest_value = val;
-	put_user(val + '0', &buf[0]);
+
+	int len = 3;
+	if (count < len) {
+		len = count;
+		_index = count;
+	}
+	message[0] = val + '0';
+	copy_to_user(buf, message, len);
+	
 
 	iounmap((void*)address);
 
-	return count;
+	return len;
+	//return count;
 }
 
 /* write時に呼ばれる関数 */
