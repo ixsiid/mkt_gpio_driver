@@ -42,39 +42,33 @@ static int selected_button = 0;
 static int next_selected = -1;
 static int writed_count = 0;
 
-for (int i = 0; i < BUTTON_COUNT; i++)
-{
-	if (buttons[i].length >= 0)
-		continue;
-	for (buttons[i].length = 0; buttons[i].message[buttons[i].length] != '\0'; buttons[i].length++)
-		;
-	buttons[i].message[buttons[i].length++] = '\n';
-	buttons[i].message[buttons[i].length++] = '\0';
-}
-
 /* 割り込み発生時(= ボタンが押されたとき)に呼ばれる関数 */
 static irqreturn_t gpio_intr(int irq, void *dev_id)
 {
-    printk("fluidsynth_controller_gpio_intr\n");
+	printk("fluidsynth_controller_gpio_intr\n");
 
 	int index = -1;
-	for (int i=0; i<BUTTON_COUNT; i++) {
-		if (buttons[i].irq == irq) {
+	for (int i = 0; i < BUTTON_COUNT; i++)
+	{
+		if (buttons[i].irq == irq)
+		{
 			index = i;
 			break;
 		}
 	}
-	if (index < 0) {
+	if (index < 0)
+	{
 		printk("not found irq\n");
 		return IRQ_HANDLED;
 	}
 
-    int value = gpio_get_value(buttons[index].pinButton);
+	int value = gpio_get_value(buttons[index].pinButton);
 	gpio_set_value(buttons[index].pinLed, value);
-    printk("button %d = %d\n", buttons[index].pinButton, value);
-	if (value > 0) next_selected = index;
+	printk("button %d = %d\n", buttons[index].pinButton, value);
+	if (value > 0)
+		next_selected = index;
 
-    return IRQ_HANDLED;
+	return IRQ_HANDLED;
 }
 
 /* open時に呼ばれる関数 */
@@ -96,8 +90,8 @@ static int fluidsynth_open(struct inode *inode, struct file *file)
 			/* BUTTONの割り込み処理を設定 */
 			buttons[i].irq = gpio_to_irq(buttons[i].pinButton);
 			if (request_irq(buttons[i].irq, (void *)gpio_intr,
-				IRQF_SHARED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
-				"fluidsynth_controller_gpio_intr", (void *)gpio_intr) < 0)
+							IRQF_SHARED | IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+							"fluidsynth_controller_gpio_intr", (void *)gpio_intr) < 0)
 			{
 				printk(KERN_ERR "request_irq\n");
 				return -1;
@@ -108,20 +102,20 @@ static int fluidsynth_open(struct inode *inode, struct file *file)
 	return 0;
 }
 
-
 /* close時に呼ばれる関数 */
 static int fluidsynth_close(struct inode *inode, struct file *file)
 {
 	printk("fluidsynth controller close");
 
-	for (int i=0; i<BUTTON_COUNT; i++) {
-		if (buttons[i].pinButton >= 0) {
+	for (int i = 0; i < BUTTON_COUNT; i++)
+	{
+		if (buttons[i].pinButton >= 0)
+		{
 			free_irq(buttons[i].irq, (void *)gpio_intr);
 		}
 	}
 	return 0;
 }
-
 
 /* read時に呼ばれる関数 */
 static ssize_t device_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
@@ -148,7 +142,6 @@ static ssize_t device_read(struct file *filp, char __user *buf, size_t count, lo
 	}
 	return -1;
 }
-
 
 /* 各種システムコールに対応するハンドラテーブル */
 struct file_operations s_mydevice_fops = {
@@ -206,6 +199,16 @@ static int mydevice_init(void)
 	for (int minor = MINOR_BASE; minor < MINOR_BASE + MINOR_NUM; minor++)
 	{
 		device_create(mydevice_class, NULL, MKDEV(mydevice_major, minor), NULL, "mydevice%d", minor);
+	}
+
+	for (int i = 0; i < BUTTON_COUNT; i++)
+	{
+		if (buttons[i].length >= 0)
+			continue;
+		for (buttons[i].length = 0; buttons[i].message[buttons[i].length] != '\0'; buttons[i].length++)
+			;
+		buttons[i].message[buttons[i].length++] = '\n';
+		buttons[i].message[buttons[i].length++] = '\0';
 	}
 
 	return 0;
