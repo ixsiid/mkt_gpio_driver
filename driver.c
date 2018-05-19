@@ -9,6 +9,8 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include <linux/gpio.h>
+#include <linux/interrupt.h>
+#include <linux/hardirq.h>
 #include <asm/current.h>
 #include <asm/uaccess.h>
 #include <asm/io.h>
@@ -29,14 +31,15 @@ typedef struct
 	int pinButton;
 	int pinLed;
 	int value;
+	int irq;
 } Button;
 
 #define BUTTON_COUNT 3
 
 static Button buttons[BUTTON_COUNT] = {
-	{"load /usr/share/sounds/sf2/TimGM6mb.sf2", -1, -1, -1, -1},
-	{"select 0 1 0 0", -1, 6, 12, 0},
-	{"select 0 2 0 16", -1, 13, 16, 0},
+	{"load /usr/share/sounds/sf2/TimGM6mb.sf2", -1, -1, -1, -1, -1},
+	{"select 0 1 0 0", -1, 6, 12, 0, -1},
+	{"select 0 2 0 16", -1, 13, 16, 0, -1},
 };
 static int selected_button = 0;
 static int next_selected = -1;
