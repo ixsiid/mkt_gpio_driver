@@ -30,16 +30,15 @@ typedef struct
 	int length;
 	int pinButton;
 	int pinLed;
-	int value;
 	int irq;
 } Button;
 
 #define BUTTON_COUNT 3
 
 static Button buttons[BUTTON_COUNT] = {
-	{"load /usr/share/sounds/sf2/TimGM6mb.sf2", -1, -1, -1, -1, -1},
-	{"select 0 1 0 0", -1, 6, 12, 0, -1},
-	{"select 0 2 0 16", -1, 13, 16, 0, -1},
+	{"load /usr/share/sounds/sf2/TimGM6mb.sf2", -1, -1, -1, -1},
+	{"select 0 1 0 0", -1, 6, 12, -1},
+	{"select 0 2 0 16", -1, 13, 16, -1},
 };
 static int selected_button = 0;
 static int next_selected = -1;
@@ -82,7 +81,7 @@ static int fluidsynth_open(struct inode *inode, struct file *file)
 	for (int i = 0; i < BUTTON_COUNT; i++)
 	{
 		/**GPIOピンの入出力設定
-		/* LEDピンを出力に設定 */
+		   LEDピンを出力に設定 */
 		if (buttons[i].pinLed >= 0)
 			gpio_direction_output(buttons[i].pinLed, 0);
 
@@ -211,7 +210,7 @@ static int mydevice_init(void)
 		for (buttons[i].length = 0; buttons[i].message[buttons[i].length] != '\0'; buttons[i].length++)
 			;
 		buttons[i].message[buttons[i].length++] = '\n';
-		buttons[i].message[buttons[i].length++] = '\0';
+		buttons[i].message[buttons[i].length] = '\0';
 	}
 
 	return 0;
