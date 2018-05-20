@@ -128,6 +128,7 @@ static ssize_t device_read(struct file *filp, char __user *buf, size_t count, lo
 
 		selected_button = next_selected;
 		next_selected = -1;
+		writed_count = 0;
 		return 1;
 	}
 
@@ -137,6 +138,7 @@ static ssize_t device_read(struct file *filp, char __user *buf, size_t count, lo
 		copy_to_user(buf, &buttons[selected_button].message[writed_count], len);
 		selected_button = next_selected;
 		next_selected = -1;
+		writed_count = 0;
 		return len;
 	}
 	else
