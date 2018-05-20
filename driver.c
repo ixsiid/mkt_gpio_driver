@@ -125,6 +125,9 @@ static ssize_t device_read(struct file *filp, char __user *buf, size_t count, lo
 	if (selected_button < 0)
 	{
 		put_user(0, &buf[0]);
+
+		selected_button = next_selected;
+		next_selected = -1;
 		return 1;
 	}
 
